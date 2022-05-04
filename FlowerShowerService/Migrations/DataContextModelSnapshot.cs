@@ -36,6 +36,64 @@ namespace FlowerShowerService.Migrations
 
                     b.ToTable("TestEntities");
                 });
+
+            modelBuilder.Entity("FlowerShowerService.Data.Entities.User", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Username").HasColumnType("nvarchar(max)");
+                    b.Property<string>("Password").HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("User");
+                });
+
+            modelBuilder.Entity("FlowerShowerService.Data.Entities.Product", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Name").HasColumnType("nvarchar(max)");
+                    b.Property<string>("Category").HasColumnType("nvarchar(max)");
+                    b.Property<float>("Price").HasColumnType("decimal(38, 2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Product");
+                });
+
+            modelBuilder.Entity("FlowerShowerService.Data.Entities.Order_item", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("OrderId").HasColumnType("int");
+                    b.Property<int>("ProductId").HasColumnType("int");
+                    b.Property<int>("Quantity").HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Order_item");
+                });
+
+            modelBuilder.Entity("FlowerShowerService.Data.Entities.Order", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("UserId").HasColumnType("int");
+                    b.Property<float>("Total").HasColumnType("decimal(38, 2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Order");
+                });
 #pragma warning restore 612, 618
         }
     }
