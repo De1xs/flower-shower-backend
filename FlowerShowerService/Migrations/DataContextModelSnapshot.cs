@@ -89,6 +89,7 @@ namespace FlowerShowerService.Migrations
 
                     b.Property<int>("UserId").HasColumnType("int");
                     b.Property<float>("Total").HasColumnType("decimal(38, 2)");
+                    b.Property<float>("Completed").HasColumnType("bit");
 
                     b.HasKey("Id");
 
