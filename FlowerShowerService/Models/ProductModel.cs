@@ -14,5 +14,5 @@ public class ProductModel
     [Range(0.01, 1000)]
     public decimal Price { get; set; }
 
-    public Category Category { get; set; } = Category.Unknown;
+    public Category Category { get; set; } = Category.Empty;
 }

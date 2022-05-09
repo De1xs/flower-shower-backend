@@ -7,4 +7,5 @@ public class Order
     public DateTime OrderedOn { get; set; } = DateTime.UtcNow;
     public User User { get; set; } = new();
     public List<OrderItem> OrderItems { get; set; } = new();
+    public string Address { get; set; } = string.Empty;
 }

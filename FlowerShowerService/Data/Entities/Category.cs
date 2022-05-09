@@ -2,8 +2,8 @@
 
 public enum Category
 {
-    Unknown,
-    Food,
-    Clothing,
-    Tech
+    Empty,
+    Bouquet,
+    Roses,
+    Tulips
 }
