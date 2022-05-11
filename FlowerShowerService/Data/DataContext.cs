@@ -1,14 +1,15 @@
-﻿using FlowerShowerService.Data.Entities;
+﻿namespace FlowerShowerService.Data;
+
+using Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace FlowerShowerService.Data
+public class DataContext : DbContext
 {
-    public class DataContext : DbContext
+    public DataContext(DbContextOptions<DataContext> options) : base(options)
     {
-        public DataContext(DbContextOptions<DataContext> options) : base(options)
-        {
-        }
-
-        public DbSet<TestEntity> TestEntities { get; set; }
     }
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Product> Products => Set<Product>();
 }
