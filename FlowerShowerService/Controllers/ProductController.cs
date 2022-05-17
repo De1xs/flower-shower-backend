@@ -1,30 +1,36 @@
 ﻿namespace FlowerShowerService.Controllers;
 
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Data;
 using Data.Entities;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
 [ApiController]
+[EnableCors]
 [Route("/API/[controller]")]
 public class ProductController : ControllerBase
 {
     private readonly DataContext _db;
-    private readonly IMapper _mapper;
 
-    public ProductController(DataContext db, IMapper mapper)
+    public ProductController(DataContext db)
     {
         _db = db;
-        _mapper = mapper;
     }
 
     [HttpPost]
     public async Task<ActionResult<Product>> Create(ProductModel model)
     {
-        var product = _mapper.Map<Product>(model);
+        var product = new Product
+        {
+            Name = model.Name,
+            Category = model.Category,
+            Description = model.Description,
+            ImageLink = model.ImageLink,
+            Price = model.Price
+        };
+
         var created = _db.Add(product);
         await _db.SaveChangesAsync();
 
@@ -40,10 +46,10 @@ public class ProductController : ControllerBase
         return product;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Product>>> ReadAll()
+    [HttpGet("{category}")]
+    public async Task<ActionResult<IEnumerable<Product>>> ReadAll(Category category)
     {
-        var products = await _db.Products.ToListAsync();
+        var products = await _db.Products.Where(p => p.Category == category).ToListAsync();
         return Ok(products);
     }
 }
