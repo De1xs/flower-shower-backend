@@ -6,6 +6,15 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader();
+        });
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -22,7 +31,7 @@ if (builder.Configuration["PasswordVerification"] is "Strict")
 {
     builder.Services.AddScoped<IPasswordHelper, StrictPasswordHelper>();
 }
-else if(builder.Configuration["PasswordVerification"] is "Relaxed")
+else if (builder.Configuration["PasswordVerification"] is "Relaxed")
 {
     builder.Services.AddScoped<IPasswordHelper, RelaxedPasswordHelper>();
 }
@@ -39,9 +48,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors();
+
 app.UseAuthorization();
 
-if(builder.Configuration["LoggingUserEndpoint"] is "True")
+if (builder.Configuration["LoggingUserEndpoint"] is "True")
 {
     app.UseOurCustomLogger();
 }
