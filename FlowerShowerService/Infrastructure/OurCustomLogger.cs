@@ -30,6 +30,7 @@ public sealed class OurCustomLogger
             await request.Body.ReadAsync(buffer, 0, buffer.Length);
 
             var requestContent = Encoding.UTF8.GetString(buffer);
+            // This should be changed to have header (we should add the header to every request from front end)
             var userModel = JsonSerializer.Deserialize<UserModel>(requestContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
             Console.WriteLine($"User: {userModel.Username} used {endpoint.ControllerTypeInfo.FullName} class and {endpoint.ActionName} method on {DateTime.Now}");
 
