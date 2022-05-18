@@ -1,27 +1,25 @@
 ﻿namespace FlowerShowerService.Controllers;
 
-using FlowerShowerService.Data;
-using FlowerShowerService.Data.Entities;
+using FlowerShowerService.Handlers;
 using FlowerShowerService.Models;
 using FlowerShowerService.Security;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 [ApiController]
-[Route("/API/user")]
+[Route("/API/[controller]")]
 public sealed class UserController : ControllerBase
 {
-    private readonly DataContext _db;
+    private readonly IUserHandler _handler;
 
-    public UserController(DataContext db)
+    public UserController(IUserHandler handler)
     {
-        _db = db;
+        _handler = handler;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromServices] IPasswordHelper passwordVerificationHelper, [FromBody] UserModel userInfo)
     {
-        if (await _db.Users.SingleOrDefaultAsync(u => u.Username == userInfo.Username) is not null)
+        if (await _handler.HandleRead(userInfo) is not null)
         {
             return BadRequest("User with this username already exists, try logging in");
         }
@@ -31,27 +29,19 @@ public sealed class UserController : ControllerBase
             return BadRequest("Password too weak");
         }
 
-        User newUser = new()
-        {
-            Username = userInfo.Username,
-            Password = userInfo.Password
-        };
+        var createdUser = await _handler.HandleCreation(userInfo);
 
-        _db.Users.Add(newUser);
-
-        await _db.SaveChangesAsync();
-
-        return Ok(newUser.Id);
+        return Created($"API/user/{createdUser.Id}", createdUser);
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserModel userInfo)
     {
-        var user = await _db.Users.SingleOrDefaultAsync(u => u.Username == userInfo.Username);
+        var user = await _handler.HandleRead(userInfo);
 
         if (user is null)
         {
-            return BadRequest("User with this username does not exist, please register");
+            return NotFound("User with this username does not exist, please register");
         }
 
         if(user.Password != userInfo.Password)
