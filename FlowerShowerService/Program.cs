@@ -1,4 +1,5 @@
 using FlowerShowerService.Data;
+using FlowerShowerService.Handlers;
 using FlowerShowerService.Infrastructure;
 using FlowerShowerService.Security;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,10 @@ else if (builder.Configuration["PasswordVerification"] is "Relaxed")
 {
     builder.Services.AddScoped<IPasswordHelper, RelaxedPasswordHelper>();
 }
+
+// Register handlers
+builder.Services.AddScoped<IProductHandler, ProductHandler>();
+builder.Services.AddScoped<IUserHandler, UserHandler>();
 
 
 var app = builder.Build();

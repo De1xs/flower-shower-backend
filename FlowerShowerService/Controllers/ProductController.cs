@@ -1,10 +1,9 @@
 ﻿namespace FlowerShowerService.Controllers;
 
-using Data;
 using Data.Entities;
+using FlowerShowerService.Handlers;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Models;
 
 [ApiController]
@@ -12,35 +11,25 @@ using Models;
 [Route("/API/[controller]")]
 public class ProductController : ControllerBase
 {
-    private readonly DataContext _db;
+    private readonly IProductHandler _handler;
 
-    public ProductController(DataContext db)
+    public ProductController(IProductHandler handler)
     {
-        _db = db;
+        _handler = handler;
     }
 
     [HttpPost]
     public async Task<ActionResult<Product>> Create(ProductModel model)
     {
-        var product = new Product
-        {
-            Name = model.Name,
-            Category = model.Category,
-            Description = model.Description,
-            ImageLink = model.ImageLink,
-            Price = model.Price
-        };
+        var createdProduct = await _handler.HandleCreation(model);
 
-        var created = _db.Add(product);
-        await _db.SaveChangesAsync();
-
-        return Created($"API/Product/{created.Entity.Id}", created.Entity);
+        return Created($"API/Product/{createdProduct.Id}", createdProduct);
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Product>> Read(int id)
     {
-        var product = await _db.Products.FindAsync(id);
+        var product = await _handler.HandleRead(id);
 
         if (product == null) return NotFound();
         return product;
@@ -49,7 +38,7 @@ public class ProductController : ControllerBase
     [HttpGet("{category}")]
     public async Task<ActionResult<IEnumerable<Product>>> ReadAll(Category category)
     {
-        var products = await _db.Products.Where(p => p.Category == category).ToListAsync();
+        var products = await _handler.HandleReadAll(category);
         return Ok(products);
     }
 }
