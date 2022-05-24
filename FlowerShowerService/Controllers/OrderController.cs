@@ -17,21 +17,15 @@ public class OrderController : ControllerBase
     {
         _handler = handler;
     }
-
-    [HttpPost]
-    public async Task<ActionResult<Order>> Create(OrderModel model)
+/* TODO add Handler
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> Delete(int id)
     {
-        var createdOrder = await _handler.HandleCreation(model);
-
-        return Created($"API/Order/{createdOrder.Id}", createdOrder);
-    }
-
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Order>> Read(int id)
-    {
-        var order = await _handler.HandleRead(id);
+        var order = await _handler.HandleDelete(id);
 
         if (order == null) return NotFound();
-        return order;
+
+        return NoContent();
     }
+    */
 }
