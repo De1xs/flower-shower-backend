@@ -1,5 +1,6 @@
 ﻿namespace FlowerShowerService.Controllers;
 
+using Data.Entities;
 using FlowerShowerService.Handlers;
 using FlowerShowerService.Models;
 using FlowerShowerService.Security;
@@ -50,5 +51,41 @@ public sealed class UserController : ControllerBase
         }
 
         return Ok(user.Id);
+    }
+
+    [HttpGet("{id:int}/Order")]
+    public async Task<ActionResult<Order>> ReadOrder(int id)
+    {
+        var order = await _handler.HandleReadOrder(id);
+
+        if (order == null) return NotFound();
+        return order;
+    }
+
+    [HttpGet("{id:int}/Orders")]
+    public async Task<ActionResult<List<Order>>> ReadOrders(int id)
+    {
+        var order = await _handler.HandleReadOrderAll(id);
+
+        if (order == null) return NotFound();
+        return order;
+    }
+
+    [HttpPost("{id:int}/OrderItem/{productId:int}")]
+    public async Task<ActionResult<Order>> WriteOrderItem(int id, int productId, [FromQuery]int quantity = 1)
+    {
+        var order = await _handler.HandleWriteOrderItem(id, productId, quantity);
+
+        if (order == null) return NotFound();
+        return order;
+    }
+
+    [HttpDelete("{id:int}/OrderItem/{productId:int}")]
+    public async Task<ActionResult<Order>> DeleteOrderItem(int id, int productId)
+    {
+        var order = await _handler.HandleDeleteOrderItem(id, productId);
+
+        if (order == null) return NotFound();
+        return order;
     }
 }
