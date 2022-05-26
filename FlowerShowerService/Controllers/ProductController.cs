@@ -26,10 +26,10 @@ public class ProductController : ControllerBase
         return Created($"API/Product/{createdProduct.Id}", createdProduct);
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Product>> Read(int id)
+    [HttpGet("{productId:int}")]
+    public async Task<ActionResult<Product>> Read(int productId)
     {
-        var product = await _handler.HandleRead(id);
+        var product = await _handler.HandleRead(productId);
 
         if (product == null) return NotFound();
         return product;
