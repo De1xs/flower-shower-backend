@@ -1,10 +1,8 @@
-﻿using FlowerShowerService.Controllers;
-using FlowerShowerService.Models;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using System.Text;
-using System.Text.Json;
+﻿namespace FlowerShowerService.Infrastructure;
 
-namespace FlowerShowerService.Infrastructure;
+using FlowerShowerService.Data;
+using FlowerShowerService.Data.Entities;
+using Microsoft.AspNetCore.Mvc.Controllers;
 
 public sealed class OurCustomLogger
 {
@@ -15,28 +13,26 @@ public sealed class OurCustomLogger
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, ILoggingService service)
     {
-
-        var endpoint = context.GetEndpoint().Metadata.GetMetadata<ControllerActionDescriptor>();
-        if(endpoint.ControllerTypeInfo.Name is nameof(UserController)) //this check won't be needed,
-                                                                       //because we have to log every single request from FE as they are all business actions
+        if (context.Request.Headers.TryGetValue("User-Id", out var userIdHeader))
         {
-            //For now let's have it like this
-            //Should create a task to implement database logging because of 7th requirment
-            var request = context.Request;
-            request.EnableBuffering();
-            var buffer = new byte[Convert.ToInt32(request.ContentLength)];
-            await request.Body.ReadAsync(buffer, 0, buffer.Length);
+            var userId = int.Parse(userIdHeader);
 
-            var requestContent = Encoding.UTF8.GetString(buffer);
-            // This should be changed to have header (we should add the header to every request from front end)
-            var userModel = JsonSerializer.Deserialize<UserModel>(requestContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-            Console.WriteLine($"User: {userModel.Username} used {endpoint.ControllerTypeInfo.FullName} class and {endpoint.ActionName} method on {DateTime.Now}");
+            var endpoint = context.GetEndpoint()!.Metadata.GetMetadata<ControllerActionDescriptor>();
 
-            request.Body.Position = 0;
+            var logEntry = new LogEntry
+            {
+                UserId = userId,
+                Role = userId == 0 ? "Admin" : "User",
+                Endpoint = endpoint.ControllerTypeInfo.FullName + '.' + endpoint.ActionName,
+                Message = $"User: {userId} used {endpoint.ControllerTypeInfo.FullName} class and {endpoint.ActionName} method",
+                Logged = DateTime.Now
+            };
+
+            await service.Log(logEntry);
         }
-        
+
         await _next(context);
     }
 }

@@ -41,6 +41,9 @@ else if (builder.Configuration["PasswordVerification"] is "Relaxed")
 builder.Services.AddScoped<IProductHandler, ProductHandler>();
 builder.Services.AddScoped<IUserHandler, UserHandler>();
 
+// Register infrastructure
+builder.Services.AddScoped<ILoggingService, LoggingService>();
+
 
 var app = builder.Build();
 
