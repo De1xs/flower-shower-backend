@@ -10,17 +10,19 @@ using Microsoft.AspNetCore.Mvc;
 [Route("/API/[controller]")]
 public sealed class UserController : ControllerBase
 {
-    private readonly IUserHandler _handler;
+    private readonly IUserHandler _userHandler;
+    private readonly IOrderHandler _orderHandler;
 
-    public UserController(IUserHandler handler)
+    public UserController(IUserHandler userHandler, IOrderHandler orderHandler)
     {
-        _handler = handler;
+        _userHandler = userHandler;
+        _orderHandler = orderHandler;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromServices] IPasswordHelper passwordVerificationHelper, [FromBody] UserModel userInfo)
     {
-        if (await _handler.HandleRead(userInfo) is not null)
+        if (await _userHandler.HandleRead(userInfo) is not null)
         {
             return BadRequest("User with this username already exists, try logging in");
         }
@@ -30,7 +32,7 @@ public sealed class UserController : ControllerBase
             return BadRequest("Password too weak");
         }
 
-        var createdUser = await _handler.HandleCreation(userInfo);
+        var createdUser = await _userHandler.HandleCreation(userInfo);
 
         return Created($"API/user/{createdUser.Id}", createdUser);
     }
@@ -38,7 +40,7 @@ public sealed class UserController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserModel userInfo)
     {
-        var user = await _handler.HandleRead(userInfo);
+        var user = await _userHandler.HandleRead(userInfo);
 
         if (user is null)
         {
@@ -54,36 +56,40 @@ public sealed class UserController : ControllerBase
     }
 
     [HttpGet("{id:int}/Order")]
-    public async Task<ActionResult<Order>> ReadOrder(int id)
+    public async Task<ActionResult<Order>> ReadOrder(int userId)
     {
-        var order = await _handler.HandleReadOrder(id);
+        var user = await _userHandler.HandleRead(userId);
+        var order = await _orderHandler.GetActiveOrder(user);
 
         if (order == null) return NotFound();
         return order;
     }
 
     [HttpGet("{id:int}/Orders")]
-    public async Task<ActionResult<List<Order>>> ReadOrders(int id)
+    public async Task<ActionResult<List<Order>>> ReadOrders(int userId)
     {
-        var order = await _handler.HandleReadOrderAll(id);
+        var user = await _userHandler.HandleRead(userId);
+        var order = await _orderHandler.HandleReadOrderAll(user);
 
         if (order == null) return NotFound();
         return order;
     }
 
     [HttpPost("{id:int}/OrderItem/{productId:int}")]
-    public async Task<ActionResult<Order>> WriteOrderItem(int id, int productId, [FromQuery]int quantity = 1)
+    public async Task<ActionResult<Order>> WriteOrderItem(int userId, int productId, [FromQuery]int quantity = 1)
     {
-        var order = await _handler.HandleWriteOrderItem(id, productId, quantity);
+        var user = await _userHandler.HandleRead(userId);
+        var order = await _orderHandler.HandleWriteOrderItem(user, productId, quantity);
 
         if (order == null) return NotFound();
         return order;
     }
 
     [HttpDelete("{id:int}/OrderItem/{productId:int}")]
-    public async Task<ActionResult<Order>> DeleteOrderItem(int id, int productId)
+    public async Task<ActionResult<Order>> DeleteOrderItem(int userId, int productId)
     {
-        var order = await _handler.HandleDeleteOrderItem(id, productId);
+        var user = await _userHandler.HandleRead(userId);
+        var order = await _orderHandler.HandleDeleteOrderItem(user, productId);
 
         if (order == null) return NotFound();
         return order;
