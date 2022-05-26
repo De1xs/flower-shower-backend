@@ -3,7 +3,7 @@
 public enum Category
 {
     Empty,
-    Bouquet,
+    Bouquets,
     Roses,
     Tulips
 }
