@@ -12,4 +12,6 @@ public class Product
 
     [Precision(5, 2)]
     public decimal Price { get; set; }
+
+    public int UnitsInStock { get; set; }
 }

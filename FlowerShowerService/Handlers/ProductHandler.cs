@@ -22,7 +22,8 @@ public class ProductHandler : IProductHandler
             Category = model.Category,
             Description = model.Description,
             ImageLink = model.ImageLink,
-            Price = model.Price
+            Price = model.Price,
+            UnitsInStock = model.UnitsInStock
         };
 
         var created = _db.Add(product);
