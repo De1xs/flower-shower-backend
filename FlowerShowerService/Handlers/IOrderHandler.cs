@@ -5,14 +5,15 @@ using FlowerShowerService.Models;
 
 public interface IOrderHandler
 {
-    Task<Order> GetActiveOrder(User user);
-    
+    Task<Order> GetActiveOrder(int userId);
 
-    Task<List<Order>> HandleReadOrderAll(User user);
+    Order CreateNewOrder(User user);
 
-    Task<Order?> HandleWriteOrderItem(User user, int productId, int quantity);
+    Task<List<Order>> HandleReadOrderAll(int userId);
 
-    Task<Order> HandleDeleteOrderItem(User user, int productId);
+    Task<Order?> HandleWriteOrderItem(int userId, int productId, int quantity);
+
+    Task<Order> HandleDeleteOrderItem(int userId, int productId);
 
     Task StartOrder(OrderModel order);
 }

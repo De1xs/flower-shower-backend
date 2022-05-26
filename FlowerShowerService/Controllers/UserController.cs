@@ -58,8 +58,12 @@ public sealed class UserController : ControllerBase
     [HttpGet("{id:int}/Order")]
     public async Task<ActionResult<Order>> ReadOrder(int userId)
     {
-        var user = await _userHandler.HandleRead(userId);
-        var order = await _orderHandler.GetActiveOrder(user);
+        var order = await _orderHandler.GetActiveOrder(userId);
+        if(order is null)
+        {
+            var user = await _userHandler.HandleRead(userId);
+            _orderHandler.CreateNewOrder(user!);
+        }
 
         if (order == null) return NotFound();
         return order;
@@ -68,8 +72,7 @@ public sealed class UserController : ControllerBase
     [HttpGet("{id:int}/Orders")]
     public async Task<ActionResult<List<Order>>> ReadOrders(int userId)
     {
-        var user = await _userHandler.HandleRead(userId);
-        var order = await _orderHandler.HandleReadOrderAll(user);
+        var order = await _orderHandler.HandleReadOrderAll(userId);
 
         if (order == null) return NotFound();
         return order;
@@ -78,8 +81,7 @@ public sealed class UserController : ControllerBase
     [HttpPost("{id:int}/OrderItem/{productId:int}")]
     public async Task<ActionResult<Order>> WriteOrderItem(int userId, int productId, [FromQuery]int quantity = 1)
     {
-        var user = await _userHandler.HandleRead(userId);
-        var order = await _orderHandler.HandleWriteOrderItem(user, productId, quantity);
+        var order = await _orderHandler.HandleWriteOrderItem(userId, productId, quantity);
 
         if (order == null) return NotFound();
         return order;
@@ -88,8 +90,7 @@ public sealed class UserController : ControllerBase
     [HttpDelete("{id:int}/OrderItem/{productId:int}")]
     public async Task<ActionResult<Order>> DeleteOrderItem(int userId, int productId)
     {
-        var user = await _userHandler.HandleRead(userId);
-        var order = await _orderHandler.HandleDeleteOrderItem(user, productId);
+        var order = await _orderHandler.HandleDeleteOrderItem(userId, productId);
 
         if (order == null) return NotFound();
         return order;

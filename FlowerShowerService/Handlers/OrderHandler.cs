@@ -18,32 +18,35 @@ public class OrderHandler : IOrderHandler
         _productHandler = productHandler;
     }
 
-    public async Task<Order> GetActiveOrder(User user)
+    public async Task<Order> GetActiveOrder(int userId)
     {
-        var order = await _db.Orders.Include(x => x.OrderItems).SingleOrDefaultAsync(o => o.User.Id == user.Id && !o.Completed);
-        if (order != null)
-            return order;
+        return await _db.Orders.Include(x => x.OrderItems).SingleOrDefaultAsync(o => o.User.Id == userId && !o.Completed);
+        
+    }
+
+    public Order CreateNewOrder(User user)
+    {
         return new Order() { User = user, OrderItems = new List<OrderItem>() };
     }
 
-    public async Task<List<Order>> HandleReadOrderAll(User user)
+    public async Task<List<Order>> HandleReadOrderAll(int userId)
     {
-        return await _db.Orders.Where(o => o.User.Id == user.Id).ToListAsync();
+        return await _db.Orders.Where(o => o.User.Id == userId).ToListAsync();
     }
 
-    public async Task<Order> HandleDeleteOrderItem(User user, int productId)
+    public async Task<Order> HandleDeleteOrderItem(int userId, int productId)
     {
-        var order = await GetActiveOrder(user);
+        var order = await GetActiveOrder(userId);
         order.OrderItems.RemoveAll(i => i.Product.Id == productId);
         await _db.SaveChangesAsync();
         return order;
     }
 
-    public async Task<Order?> HandleWriteOrderItem(User user, int productId, int quantity)
+    public async Task<Order?> HandleWriteOrderItem(int userId, int productId, int quantity)
     {
         try
         {
-            var order = await GetActiveOrder(user);
+            var order = await GetActiveOrder(userId);
             var product = await _productHandler.HandleRead(productId);
             if (product is null)
                 throw new KeyNotFoundException();
