@@ -55,44 +55,43 @@ public sealed class UserController : ControllerBase
         return Ok(user.Id);
     }
 
-    [HttpGet("{id:int}/Order")]
+    [HttpGet("{userId:int}/Order")]
     public async Task<ActionResult<Order>> ReadOrder(int userId)
     {
-        var order = await _orderHandler.GetActiveOrder(userId);
-        if(order is null)
-        {
-            var user = await _userHandler.HandleRead(userId);
-            _orderHandler.CreateNewOrder(user!);
-        }
+        var user = await _userHandler.HandleRead(userId);
+        if (user == null) return NotFound();
+        var order = await _orderHandler.GetCreatedActiveOrder(user);
 
-        if (order == null) return NotFound();
         return order;
     }
 
-    [HttpGet("{id:int}/Orders")]
+    [HttpGet("{userId:int}/Orders")]
     public async Task<ActionResult<List<Order>>> ReadOrders(int userId)
     {
-        var order = await _orderHandler.HandleReadOrderAll(userId);
+        var user = await _userHandler.HandleRead(userId);
+        if (user == null) return NotFound();
+        var orders = await _orderHandler.HandleReadOrderAll(userId);
 
-        if (order == null) return NotFound();
-        return order;
+        return orders;
     }
 
-    [HttpPost("{id:int}/OrderItem/{productId:int}")]
+    [HttpPost("{userId:int}/OrderItem/{productId:int}")]
     public async Task<ActionResult<Order>> WriteOrderItem(int userId, int productId, [FromQuery]int quantity = 1)
     {
-        var order = await _orderHandler.HandleWriteOrderItem(userId, productId, quantity);
+        var user = await _userHandler.HandleRead(userId);
+        if (user == null) return NotFound();
+        var order = await _orderHandler.HandleWriteOrderItem(user, productId, quantity);
 
-        if (order == null) return NotFound();
         return order;
     }
 
-    [HttpDelete("{id:int}/OrderItem/{productId:int}")]
+    [HttpDelete("{userId:int}/OrderItem/{productId:int}")]
     public async Task<ActionResult<Order>> DeleteOrderItem(int userId, int productId)
     {
-        var order = await _orderHandler.HandleDeleteOrderItem(userId, productId);
+        var user = await _userHandler.HandleRead(userId);
+        if (user == null) return NotFound();
+        var order = await _orderHandler.HandleDeleteOrderItem(user, productId);
 
-        if (order == null) return NotFound();
         return order;
     }
 }
