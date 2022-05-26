@@ -1,7 +1,7 @@
 ﻿namespace FlowerShowerService.Controllers;
 
-using Data.Entities;
 using FlowerShowerService.Handlers;
+using FlowerShowerService.OurExceptions;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Models;
@@ -16,6 +16,26 @@ public class OrderController : ControllerBase
     public OrderController(IOrderHandler handler)
     {
         _handler = handler;
+    }
+
+    [HttpPost("startOrder")]
+    public async Task<IActionResult> StartOrder(OrderModel startOrderRequest)
+    {
+        try
+        {
+            await _handler.StartOrder(startOrderRequest);
+        }
+        catch(KeyNotFoundException ex)
+        {
+            return NotFound("Cart not found");
+        }
+        catch(CartEmptyException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        
+
+        return Ok();
     }
 /* TODO add Handler
     [HttpDelete("{id:int}")]
