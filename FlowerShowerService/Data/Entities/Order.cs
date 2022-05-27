@@ -8,4 +8,5 @@ public class Order
     public User User { get; set; } = new();
     public List<OrderItem> OrderItems { get; set; } = new();
     public string Address { get; set; } = string.Empty;
+    public DateTime? DeliveryDate { get; set; }
 }

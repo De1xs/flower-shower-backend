@@ -10,5 +10,8 @@ public class OrderModel
     [Required]
     public string Address { get; set; } = string.Empty;
 
+    [Required]
+    public DateTime DeliveryData { get; set; }
+
     //We should probably add card info here as well :/
 }
