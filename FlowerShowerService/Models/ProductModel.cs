@@ -22,5 +22,6 @@ public class ProductModel
     [Range(0.01, 1000)]
     public decimal Price { get; set; }
 
-    
+    [Required]
+    public int UnitsInStock { get; set; }
 }
