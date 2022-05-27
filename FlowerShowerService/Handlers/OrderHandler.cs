@@ -11,6 +11,7 @@ public class OrderHandler : IOrderHandler
 {
     private readonly DataContext _db;
     private readonly IProductHandler _productHandler;
+    private const string ProductIdNotFound = "Product with specified id does not exist";
 
     public OrderHandler(DataContext db, IProductHandler productHandler)
     {
@@ -36,7 +37,15 @@ public class OrderHandler : IOrderHandler
     public async Task<Order> HandleDeleteOrderItem(User user, int productId)
     {
         var order = await GetCreatedActiveOrder(user);
-        order.OrderItems.RemoveAll(i => i.Product.Id == productId);
+        var product = await _productHandler.HandleRead(productId);
+        if (product is null)
+            throw new KeyNotFoundException(ProductIdNotFound);
+        var orderItem = order.OrderItems.SingleOrDefault(i => i.Product.Id == productId);
+        if (orderItem is null)
+            return order;
+
+        order.OrderItems.Remove(orderItem);
+        product.UnitsInStock += orderItem.Quantity;
         await _db.SaveChangesAsync();
         return order;
     }
@@ -47,7 +56,7 @@ public class OrderHandler : IOrderHandler
     {
         var product = await _productHandler.HandleRead(productId);
         if (product is null)
-            throw new KeyNotFoundException();
+            throw new KeyNotFoundException(ProductIdNotFound);
 
         if (product.UnitsInStock < quantity)
             throw new NotInStockException("Quantity exceeds items left in stock");
