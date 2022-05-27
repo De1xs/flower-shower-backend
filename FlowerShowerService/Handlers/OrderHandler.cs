@@ -11,6 +11,7 @@ public class OrderHandler : IOrderHandler
 {
     private readonly DataContext _db;
     private readonly IProductHandler _productHandler;
+    private const string ProductIdNotFound = "Product with specified id does not exist";
 
     public OrderHandler(DataContext db, IProductHandler productHandler)
     {
@@ -18,15 +19,12 @@ public class OrderHandler : IOrderHandler
         _productHandler = productHandler;
     }
 
-    public async Task<Order> GetActiveOrder(int userId)
+    public async Task<Order> GetCreatedActiveOrder(User user)
     {
-        return await _db.Orders.Include(x => x.OrderItems).SingleOrDefaultAsync(o => o.User.Id == userId && !o.Completed);
-        
-    }
-
-    public Order CreateNewOrder(User user)
-    {
-        return new Order() { User = user, OrderItems = new List<OrderItem>() };
+        var order = await _db.Orders.Include(x => x.OrderItems)
+            .SingleOrDefaultAsync(o => o.User.Id == user.Id && !o.Completed);
+        // Create new Active Order if none exists
+        return order ?? new Order() { User = user, OrderItems = new List<OrderItem>() , Completed = false};
     }
 
     public async Task<List<Order>> HandleReadOrderAll(int userId)
@@ -34,44 +32,50 @@ public class OrderHandler : IOrderHandler
         return await _db.Orders.Where(o => o.User.Id == userId).ToListAsync();
     }
 
-    public async Task<Order> HandleDeleteOrderItem(int userId, int productId)
+    // Deletes OrderItem from Order
+    // Creates new Order if no Active Order exists
+    public async Task<Order> HandleDeleteOrderItem(User user, int productId)
     {
-        var order = await GetActiveOrder(userId);
-        order.OrderItems.RemoveAll(i => i.Product.Id == productId);
+        var order = await GetCreatedActiveOrder(user);
+        var product = await _productHandler.HandleRead(productId);
+        if (product is null)
+            throw new KeyNotFoundException(ProductIdNotFound);
+        var orderItem = order.OrderItems.SingleOrDefault(i => i.Product.Id == productId);
+        if (orderItem is null)
+            return order;
+
+        order.OrderItems.Remove(orderItem);
+        product.UnitsInStock += orderItem.Quantity;
         await _db.SaveChangesAsync();
         return order;
     }
 
-    public async Task<Order?> HandleWriteOrderItem(int userId, int productId, int quantity)
+    // Adds OrderItem to Order
+    // Creates new Order if no Active Order exists
+    public async Task<Order> HandleWriteOrderItem(User user, int productId, int quantity)
     {
-        try
-        {
-            var order = await GetActiveOrder(userId);
-            var product = await _productHandler.HandleRead(productId);
-            if (product is null)
-                throw new KeyNotFoundException();
+        var product = await _productHandler.HandleRead(productId);
+        if (product is null)
+            throw new KeyNotFoundException(ProductIdNotFound);
 
-            order.OrderItems.Add(new OrderItem() { Product = product, Quantity = quantity });
-            await _db.SaveChangesAsync();
+        if (product.UnitsInStock < quantity)
+            throw new NotInStockException("Quantity exceeds items left in stock");
 
-            return order;
-        }
-        catch (KeyNotFoundException exception)
-        {
-            return null;
-        }
+        // Override existing Order Items with same ProductId
+        var order = await HandleDeleteOrderItem(user, productId);
+        order.OrderItems.Add(new OrderItem() { Product = product, Quantity = quantity });
+        product.UnitsInStock -= quantity;
+        await _db.SaveChangesAsync();
+
+        return order;
     }
 
     public async Task StartOrder(OrderModel orderStartRequest)
     {
         var order = await _db.Orders.Include(o => o.OrderItems).SingleOrDefaultAsync(o => o.User.Id == orderStartRequest.UserId);
 
-        if(order is null)
-        {
-            throw new KeyNotFoundException("There is no order");
-        }
-
-        if (!order.OrderItems.Any())
+        // If Order is empty, that means no Order Items were added
+        if (order is null || !order.OrderItems.Any())
         {
             throw new CartEmptyException("Cart is empty");
         }

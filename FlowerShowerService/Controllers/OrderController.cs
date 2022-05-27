@@ -33,19 +33,7 @@ public class OrderController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
-        
 
         return Ok();
     }
-/* TODO add Handler
-    [HttpDelete("{id:int}")]
-    public async Task<ActionResult> Delete(int id)
-    {
-        var order = await _handler.HandleDelete(id);
-
-        if (order == null) return NotFound();
-
-        return NoContent();
-    }
-    */
 }

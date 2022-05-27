@@ -5,6 +5,7 @@ using FlowerShowerService.Handlers;
 using FlowerShowerService.Models;
 using FlowerShowerService.Security;
 using Microsoft.AspNetCore.Mvc;
+using OurExceptions;
 
 [ApiController]
 [Route("/API/[controller]")]
@@ -12,6 +13,8 @@ public sealed class UserController : ControllerBase
 {
     private readonly IUserHandler _userHandler;
     private readonly IOrderHandler _orderHandler;
+
+    private const string UserIdNotFound = "User with this id does not exist.";
 
     public UserController(IUserHandler userHandler, IOrderHandler orderHandler)
     {
@@ -55,44 +58,62 @@ public sealed class UserController : ControllerBase
         return Ok(user.Id);
     }
 
-    [HttpGet("{id:int}/Order")]
+    [HttpGet("{userId:int}/Order")]
     public async Task<ActionResult<Order>> ReadOrder(int userId)
     {
-        var order = await _orderHandler.GetActiveOrder(userId);
-        if(order is null)
-        {
-            var user = await _userHandler.HandleRead(userId);
-            _orderHandler.CreateNewOrder(user!);
-        }
+        var user = await _userHandler.HandleRead(userId);
+        if (user == null) return NotFound(UserIdNotFound);
+        var order = await _orderHandler.GetCreatedActiveOrder(user);
 
-        if (order == null) return NotFound();
         return order;
     }
 
-    [HttpGet("{id:int}/Orders")]
+    [HttpGet("{userId:int}/Orders")]
     public async Task<ActionResult<List<Order>>> ReadOrders(int userId)
     {
-        var order = await _orderHandler.HandleReadOrderAll(userId);
+        var user = await _userHandler.HandleRead(userId);
+        if (user == null) return NotFound(UserIdNotFound);
 
-        if (order == null) return NotFound();
-        return order;
+        var orders = await _orderHandler.HandleReadOrderAll(userId);
+
+        return orders;
     }
 
-    [HttpPost("{id:int}/OrderItem/{productId:int}")]
+    [HttpPost("{userId:int}/OrderItem/{productId:int}")]
     public async Task<ActionResult<Order>> WriteOrderItem(int userId, int productId, [FromQuery]int quantity = 1)
     {
-        var order = await _orderHandler.HandleWriteOrderItem(userId, productId, quantity);
+        var user = await _userHandler.HandleRead(userId);
+        if (user == null) return NotFound(UserIdNotFound);
 
-        if (order == null) return NotFound();
-        return order;
+        try
+        {
+            var order = await _orderHandler.HandleWriteOrderItem(user, productId, quantity);
+            return order;
+        }
+        catch(KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
-    [HttpDelete("{id:int}/OrderItem/{productId:int}")]
+    [HttpDelete("{userId:int}/OrderItem/{productId:int}")]
     public async Task<ActionResult<Order>> DeleteOrderItem(int userId, int productId)
     {
-        var order = await _orderHandler.HandleDeleteOrderItem(userId, productId);
+        var user = await _userHandler.HandleRead(userId);
+        if (user == null) return NotFound(UserIdNotFound);
 
-        if (order == null) return NotFound();
-        return order;
+        try
+        {
+            var order = await _orderHandler.HandleDeleteOrderItem(user, productId);
+            return order;
+        }
+        catch(KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch(NotInStockException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 }
