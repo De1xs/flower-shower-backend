@@ -82,5 +82,8 @@ public class OrderHandler : IOrderHandler
 
         order.Address = orderStartRequest.Address;
         order.OrderedOn = DateTime.Now;
+        order.DeliveryDate = orderStartRequest.DeliveryData;
+
+        await _db.SaveChangesAsync();
     }
 }
