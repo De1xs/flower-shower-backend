@@ -24,7 +24,14 @@ public class OrderHandler : IOrderHandler
         var order = await _db.Orders.Include(x => x.OrderItems)
             .SingleOrDefaultAsync(o => o.User.Id == user.Id && !o.Completed);
         // Create new Active Order if none exists
-        return order ?? new Order() { User = user, OrderItems = new List<OrderItem>() , Completed = false};
+        if(order is null)
+        {
+            order = new Order() { User = user, OrderItems = new List<OrderItem>(), Completed = false };
+            await _db.Orders.AddAsync(order);
+            await _db.SaveChangesAsync();
+        }
+        
+        return order;
     }
 
     public async Task<List<Order>> HandleReadOrderAll(int userId)

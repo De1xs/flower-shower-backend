@@ -94,6 +94,10 @@ public sealed class UserController : ControllerBase
         {
             return NotFound(ex.Message);
         }
+        catch(NotInStockException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpDelete("{userId:int}/OrderItem/{productId:int}")]
