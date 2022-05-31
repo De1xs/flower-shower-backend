@@ -21,7 +21,7 @@ public class OrderHandler : IOrderHandler
 
     public async Task<Order> GetCreatedActiveOrder(User user)
     {
-        var order = await _db.Orders.Include(x => x.OrderItems)
+        var order = await _db.Orders.Include(x => x.OrderItems).ThenInclude(ot => ot.Product)
             .SingleOrDefaultAsync(o => o.User.Id == user.Id && !o.Completed);
         // Create new Active Order if none exists
         if(order is null)
@@ -30,7 +30,7 @@ public class OrderHandler : IOrderHandler
             await _db.Orders.AddAsync(order);
             await _db.SaveChangesAsync();
         }
-        
+
         return order;
     }
 
@@ -79,7 +79,7 @@ public class OrderHandler : IOrderHandler
 
     public async Task StartOrder(OrderModel orderStartRequest)
     {
-        var order = await _db.Orders.Include(o => o.OrderItems).SingleOrDefaultAsync(o => o.User.Id == orderStartRequest.UserId);
+        var order = await _db.Orders.Include(o => o.OrderItems).SingleOrDefaultAsync(o => o.User.Id == orderStartRequest.UserId && o.Completed == false);
 
         // If Order is empty, that means no Order Items were added
         if (order is null || !order.OrderItems.Any())
@@ -90,6 +90,7 @@ public class OrderHandler : IOrderHandler
         order.Address = orderStartRequest.Address;
         order.OrderedOn = DateTime.Now;
         order.DeliveryDate = orderStartRequest.DeliveryData;
+        order.Completed = true;
 
         await _db.SaveChangesAsync();
     }

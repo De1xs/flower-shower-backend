@@ -1,6 +1,4 @@
 ﻿namespace FlowerShowerService.Infrastructure;
-
-using FlowerShowerService.Data;
 using FlowerShowerService.Data.Entities;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
@@ -15,7 +13,7 @@ public sealed class OurCustomLogger
 
     public async Task InvokeAsync(HttpContext context, ILoggingService service)
     {
-        if (context.Request.Headers.TryGetValue("User-Id", out var userIdHeader))
+        if (context.Request.Headers.TryGetValue("UserId", out var userIdHeader))
         {
             var userId = int.Parse(userIdHeader);
 
