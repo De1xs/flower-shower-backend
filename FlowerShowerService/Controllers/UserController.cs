@@ -37,7 +37,7 @@ public sealed class UserController : ControllerBase
 
         var createdUser = await _userHandler.HandleCreation(userInfo);
 
-        return Created($"API/user/{createdUser.Id}", createdUser);
+        return Ok(createdUser.Id);
     }
 
     [HttpPost("login")]
